@@ -2,19 +2,21 @@
 
 ## Overview
 
-This project is an interactive R Shiny dashboard that visualizes the Old Faithful Geyser dataset. Users can customise the histogram appearance, display a density curve, explore the underlying data, and view summary statistics.
+This project is an interactive R Shiny dashboard that visualizes the Old Faithful Geyser dataset. Users can switch between eruption duration and waiting time, customise the histogram appearance, display a density curve, explore the underlying data, and download it as a CSV.
 
 ## Features
 
 - Interactive histogram using Plotly
-- Adjustable number of bins
+- Switch between eruption duration and waiting time
+- Adjustable number of bins with guidance messages
 - Custom histogram bar colours
 - Custom bar outline colours
 - Custom density curve colours
-- Toggle density curve on/off
+- Toggle density curve on/off, scaled to the frequency axis
+- One-click reset of all controls
+- Summary statistics table (min, quartiles, median, mean, max, standard deviation, observations)
 - Sortable and filterable data table
-- Dynamic user feedback based on bin selection
-- Summary statistics for the displayed data
+- CSV download of the dataset
 
 ## Packages Used
 
@@ -42,6 +44,7 @@ install.packages(c("shiny", "plotly", "DT"))
 shiny::runApp()
 ```
 
-## Author
+## Authors
 
-Jadon Solomon
+- Zain
+- Jadon Solomon
