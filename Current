@@ -1,0 +1,276 @@
+library(shiny)
+library(plotly)
+library(DT)
+
+ui <- fluidPage(
+  
+  
+  tags$head(
+    tags$style(HTML("
+      body {
+        background-color: #1e1e2f;
+        color: white;
+      }
+
+      .well {
+        background-color: #2c2c3e;
+      }
+
+      .btn {
+        background-color: #007bc2;
+        color: white;
+        border: none;
+      }
+
+      .btn:hover {
+        background-color: #005f94;
+      }
+
+      h2 {
+        color: #00c8ff;
+      }
+    "))
+  ),
+  
+  
+  titlePanel("Interactive Histogram"),
+  
+  fluidRow(
+    
+    column(
+      width = 3,
+      
+      selectInput(
+        "barColor",
+        "Bar Colour:",
+        choices = c(
+          "blue", "red", "green",
+          "purple", "pink",
+          "magenta", "cyan"
+        )
+      ),
+      
+      checkboxInput(
+        "showDensity",
+        "Show Density Curve",
+        TRUE
+      ),
+      
+      numericInput(
+        "bins",
+        "Number of Bins:",
+        value = 10,
+        min = 1,
+        max = 50
+      ),
+      
+      selectInput(
+        "densityColor",
+        "Density Curve Colour:",
+        choices = c(
+          "black",
+          "red",
+          "blue",
+          "green"
+        )
+      ),
+      
+      selectInput(
+        "borderColor",
+        "Bar Outline Colour:",
+        choices = c(
+          "black",
+          "red",
+          "blue",
+          "green"
+        )
+      ),
+      
+      actionButton(
+        "reset",
+        "Reset Inputs"
+      )
+    ),
+    
+    column(
+      width = 9,
+      
+      plotlyOutput("hist")
+    )
+    
+  ),
+  
+  hr(),
+  
+  textOutput("binMessage"),
+  
+  textOutput("resetMessage"),
+  
+  verbatimTextOutput("summaryStats"),
+  
+  hr(),
+  
+  DTOutput("histData")
+  
+)
+
+server <- function(input, output, session) {
+  
+  histData <- reactive({
+    faithful$eruptions
+  })
+  
+  observeEvent(input$reset, {
+    
+    updateSelectInput(
+      session,
+      "barColor",
+      selected = "blue"
+    )
+    
+    updateCheckboxInput(
+      session,
+      "showDensity",
+      value = TRUE
+    )
+    
+    updateNumericInput(
+      session,
+      "bins",
+      value = 10
+    )
+    
+    updateSelectInput(
+      session,
+      "densityColor",
+      selected = "black"
+    )
+    
+    updateSelectInput(
+      session,
+      "borderColor",
+      selected = "black"
+    )
+    
+  })
+  
+  output$resetMessage <- renderText({
+    
+    if (input$reset > 0) {
+      "Inputs have been reset successfully."
+    } else {
+      ""
+    }
+    
+  })
+  
+  output$binMessage <- renderText({
+    
+    if (input$bins < 5) {
+      
+      "Warning: Very few bins selected. The histogram may not show enough detail."
+      
+    } else if (input$bins > 40) {
+      
+      "Warning: Many bins selected. The histogram may be difficult to interpret."
+      
+    } else {
+      
+      "Number of bins is within the recommended range."
+      
+    }
+    
+  })
+  
+  output$summaryStats <- renderPrint({
+    
+    cat("Summary of Displayed Data\n")
+    cat("-------------------------\n")
+    cat("Minimum:", round(min(histData()), 2), "\n")
+    cat("Maximum:", round(max(histData()), 2), "\n")
+    cat("Mean:", round(mean(histData()), 2), "\n")
+    cat("Median:", round(median(histData()), 2), "\n")
+    cat("Observations:", length(histData()), "\n")
+    
+  })
+  
+  output$histData <- renderDT({
+    
+    datatable(
+      data.frame(Eruptions = histData()),
+      filter = "top",
+      options = list(
+        pageLength = 10
+      )
+    )
+    
+  })
+  
+  output$hist <- renderPlotly({
+    
+    p <- plot_ly(
+      x = histData(),
+      type = "histogram",
+      nbinsx = input$bins,
+      
+      marker = list(
+        color = input$barColor,
+        line = list(
+          color = input$borderColor,
+          width = 1
+        )
+      ),
+      
+      hovertemplate = paste(
+        "<b>Old Faithful Eruptions</b>",
+        "<br>Duration: %{x}",
+        "<br>Count: %{y}",
+        "<br>Colour:", input$barColor,
+        "<br>Bins:", input$bins,
+        "<extra></extra>"
+      )
+    )
+    
+    if (input$showDensity) {
+      
+      dens <- density(histData())
+      
+      p <- p %>%
+        add_lines(
+          x = dens$x,
+          y = dens$y * length(histData()) *
+            diff(range(histData())) / input$bins,
+          
+          name = "Density Curve",
+          
+          line = list(
+            color = input$densityColor,
+            width = 2
+          ),
+          
+          hovertemplate = paste(
+            "<b>Density Curve</b>",
+            "<br>Duration: %{x:.2f}",
+            "<br>Density: %{y:.2f}",
+            "<extra></extra>"
+          )
+        )
+      
+    }
+    
+    p %>%
+      layout(
+        title = "Old Faithful Eruptions Histogram",
+        xaxis = list(
+          title = "Eruption Duration"
+        ),
+        yaxis = list(
+          title = "Frequency"
+        )
+      )
+    
+  })
+  
+}
+
+shinyApp(ui, server)
