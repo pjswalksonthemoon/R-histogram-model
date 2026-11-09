@@ -48,3 +48,13 @@ shiny::runApp()
 
 - Zain
 - Jadon Solomon
+
+## Checks and reproducibility
+
+Run the smoke check after installing the packages above:
+
+```sh
+Rscript tests/smoke.R
+```
+
+GitHub Actions runs the same check on pushes and pull requests. For an exact local package record, run `sessionInfo()` in the R session used to test the app and keep its output with your release notes. Package versions are not currently locked, so a future package update may affect reproducibility.
